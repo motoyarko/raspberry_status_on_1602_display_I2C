@@ -30,6 +30,10 @@ E_DELAY = 0.0005
 #bus = smbus.SMBus(0)  # Rev 1 Pi uses 0
 bus = smbus.SMBus(1) # Rev 2 Pi uses 1
 
+# Custom symbols
+heart = bytearray([0x00,0x00,0x1B,0x1F,0x1F,0x0E,0x04,0x00])
+face = bytearray([0x00,0x00,0x0A,0x00,0x11,0x0E,0x00,0x00])
+
 def lcd_init():
  # Initialise display
  lcd_byte(0x33,LCD_CMD) # 110011 Initialise
@@ -45,6 +49,7 @@ def lcd_byte(bits, mode):
  # bits = the data
  # mode = 1 for data
  #        0 for command
+
  bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
  bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
 
@@ -73,6 +78,19 @@ def lcd_string(message,line):
 
  for i in range(LCD_WIDTH):
    lcd_byte(ord(message[i]),LCD_CHR)
+
+
+def lcd_char(char, line, position):
+ # Send byte array character to lcd
+ # char - bytearray of character
+ # line - line to print
+ # position - position of the character
+
+ lcd_byte(64,LCD_CMD)
+ for i in char:
+  lcd_byte(i,LCD_CHR)
+ lcd_byte(line + position, LCD_CMD)
+ lcd_byte(0,LCD_CHR)
 
 def get_system_info():
  # Get cpu statistics
@@ -107,7 +125,6 @@ def get_system_info():
  #print("Disk Info–>", disk_info)
 
  return([cpu, mem_info, swap_mem_info, disk_info])
-
 def main():
  # Main program block
 
@@ -124,6 +141,12 @@ def main():
 
 
    # Send some test
+   lcd_char(heart,LCD_LINE_1, 0x01)
+   time.sleep(2)
+   lcd_char(face, LCD_LINE_2, 0x02)
+
+   time.sleep(5)
+
    lcd_string("Time:  " + time.strftime("%H:%M", time.localtime()),LCD_LINE_1)
    lcd_string("Cpu  " + cpu,LCD_LINE_2)
    time.sleep(5)
@@ -132,7 +155,7 @@ def main():
    time.sleep(5)
    lcd_string("Swap Total Used ",LCD_LINE_1)
    lcd_string("     " + swap_mem,LCD_LINE_2)
-  time.sleep(5) # Send some more text lcd_string("> Tutorial Url:",LCD_LINE_1)
+   time.sleep(5) # Send some more text lcd_string("> Tutorial Url:",LCD_LINE_1)
    lcd_string("HDD  Total Used ",LCD_LINE_1)
    lcd_string("     " + disk,LCD_LINE_2)
    time.sleep(5)
@@ -145,3 +168,4 @@ if __name__ == '__main__':
    pass
  finally:
    lcd_byte(0x01, LCD_CMD)
+
